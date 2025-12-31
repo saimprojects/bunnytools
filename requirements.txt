@@ -12,6 +12,7 @@ django-jazzmin==3.0.1
 django-js-asset==3.1.2
 djangorestframework==3.14.0
 djangorestframework-simplejwt==5.2.2
+gunicorn==23.0.0  # ✅ Latest version add karo
 idna==3.11
 pillow==12.0.0
 psycopg2-binary==2.9.11
@@ -24,3 +25,4 @@ six==1.17.0
 sqlparse==0.5.5
 tzdata==2025.3
 urllib3==2.6.2
+whitenoise==6.8.2  # ✅ Static files ke liye important

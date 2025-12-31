@@ -61,11 +61,6 @@ try:
         'default': db_config
     }
     
-    print(f"✅ Database configured successfully")
-    print(f"   Engine: {db_config.get('ENGINE')}")
-    print(f"   Name: {db_config.get('NAME')}")
-    print(f"   Host: {db_config.get('HOST')}")
-    print(f"   Port: {db_config.get('PORT')}")
     
 except Exception as e:
     raise ImproperlyConfigured(
@@ -97,6 +92,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -145,6 +141,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # MEDIA / CLOUDINARY
 MEDIA_URL = '/media/'
