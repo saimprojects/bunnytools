@@ -212,9 +212,22 @@ JAZZMIN_SETTINGS = {
     'navigation_expanded': False,
 }
 
-# CKEDITOR
-CKEDITOR_CONFIGS = {'default': {'toolbar': 'full', 'height': 300, 'width': 'auto'}}
+# CKEditor basic config
+
 CKEDITOR_UPLOAD_PATH = "ckeditor_uploads/"
+
+CKEDITOR_CONFIGS = {
+    "default": {
+        "toolbar": [
+            ["Bold", "Italic", "Underline"],
+            ["NumberedList", "BulletedList"],
+            ["Link", "Unlink"],
+            ["RemoveFormat"],
+        ],
+        "height": 200,
+        "width": "auto",
+    }
+}
 
 # CORS
 CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:5173').split(',')
