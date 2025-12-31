@@ -31,7 +31,27 @@ if not SECRET_KEY:
     raise ImproperlyConfigured('DJANGO_SECRET_KEY is not set in environment variables')
 
 DEBUG: bool = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
-ALLOWED_HOSTS: list[str] = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+
+# ALLOWED_HOSTS - Railway ke liye update karo
+ALLOWED_HOSTS: list[str] = []
+
+# Environment se ALLOWED_HOSTS lelo
+env_hosts = os.environ.get('DJANGO_ALLOWED_HOSTS', '')
+if env_hosts:
+    ALLOWED_HOSTS.extend(env_hosts.split(','))
+
+# Railway domains automatically add karo
+ALLOWED_HOSTS.extend([
+    '.railway.app',  # Sab railway subdomains allow karega
+    'localhost',
+    '127.0.0.1',
+    '[::1]',
+])
+
+# Remove any empty strings
+ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS if host.strip()]
+
+print(f"🌐 ALLOWED_HOSTS: {ALLOWED_HOSTS}")
 
 # DATABASE - Railway PostgreSQL ONLY
 DATABASE_URL: str = os.environ.get('DATABASE_URL')
@@ -61,6 +81,11 @@ try:
         'default': db_config
     }
     
+    print(f"✅ Database configured successfully")
+    print(f"   Engine: {db_config.get('ENGINE')}")
+    print(f"   Name: {db_config.get('NAME')}")
+    print(f"   Host: {db_config.get('HOST')}")
+    print(f"   Port: {db_config.get('PORT')}")
     
 except Exception as e:
     raise ImproperlyConfigured(
@@ -91,9 +116,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # ✅ SecurityMiddleware ke baad hona chahiye
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -195,11 +220,27 @@ CKEDITOR_UPLOAD_PATH = "ckeditor_uploads/"
 CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:5173').split(',')
 CORS_ALLOW_CREDENTIALS = True
 
-# SECURE PROXY SETTINGS (for Railway)
-if not DEBUG:
-    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-    SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
+# CSRF TRUSTED ORIGINS
+CSRF_TRUSTED_ORIGINS = []
+if os.environ.get('RAILWAY_PUBLIC_DOMAIN'):
+    CSRF_TRUSTED_ORIGINS.append(f"https://{os.environ.get('RAILWAY_PUBLIC_DOMAIN')}")
+CSRF_TRUSTED_ORIGINS.extend([
+    'https://*.railway.app',
+    'http://localhost:5173',
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+])
 
+# SECURE PROXY SETTINGS (for Railway)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+
+print("=" * 50)
 print("🚀 Django Settings loaded successfully!")
+print(f"📱 DEBUG mode: {DEBUG}")
+print(f"🌐 Allowed Hosts: {ALLOWED_HOSTS}")
+print(f"🔗 CORS Origins: {CORS_ALLOWED_ORIGINS}")
+print(f"🔒 CSRF Trusted Origins: {CSRF_TRUSTED_ORIGINS}")
+print("=" * 50)
