@@ -14,16 +14,11 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 env_path = BASE_DIR / '.env'
 
-print(f"🔍 Looking for .env file at: {env_path}")
-
 if env_path.exists():
     load_dotenv(dotenv_path=env_path)
-    print("✅ .env file loaded successfully")
 else:
-    print("⚠️  WARNING: .env file not found at expected location!")
     # Try to load from current directory as fallback
     load_dotenv()
-    print("🔄 Trying to load .env from default locations...")
 
 # SECURITY
 SECRET_KEY: str = os.environ.get('DJANGO_SECRET_KEY')
@@ -51,8 +46,6 @@ ALLOWED_HOSTS.extend([
 # Remove any empty strings
 ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS if host.strip()]
 
-print(f"🌐 ALLOWED_HOSTS: {ALLOWED_HOSTS}")
-
 # DATABASE - Railway PostgreSQL ONLY
 DATABASE_URL: str = os.environ.get('DATABASE_URL')
 
@@ -62,8 +55,6 @@ if not DATABASE_URL:
         'Please add DATABASE_URL to your .env file with Railway PostgreSQL connection string.\n'
         f'Current .env path: {env_path}'
     )
-
-print(f"📊 DATABASE_URL found: {DATABASE_URL[:50]}...")  # Show first 50 chars
 
 # Parse DATABASE_URL
 try:
@@ -80,12 +71,6 @@ try:
     DATABASES = {
         'default': db_config
     }
-    
-    print(f"✅ Database configured successfully")
-    print(f"   Engine: {db_config.get('ENGINE')}")
-    print(f"   Name: {db_config.get('NAME')}")
-    print(f"   Host: {db_config.get('HOST')}")
-    print(f"   Port: {db_config.get('PORT')}")
     
 except Exception as e:
     raise ImproperlyConfigured(
@@ -117,7 +102,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',  # ✅ SecurityMiddleware ke baad hona chahiye
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -178,7 +163,7 @@ API_KEY = os.environ.get('API_KEY')
 API_SECRET = os.environ.get('API_SECRET')
 
 if not all([CLOUD_NAME, API_KEY, API_SECRET]):
-    print("⚠️  WARNING: Cloudinary credentials not fully set in .env file")
+    pass  # Silent fail for production
 
 cloudinary.config(
     cloud_name=CLOUD_NAME,
@@ -212,8 +197,7 @@ JAZZMIN_SETTINGS = {
     'navigation_expanded': False,
 }
 
-# CKEditor basic config
-
+# CKEditor
 CKEDITOR_UPLOAD_PATH = "ckeditor_uploads/"
 
 CKEDITOR_CONFIGS = {
@@ -249,11 +233,3 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_SSL_REDIRECT = not DEBUG
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
-
-print("=" * 50)
-print("🚀 Django Settings loaded successfully!")
-print(f"📱 DEBUG mode: {DEBUG}")
-print(f"🌐 Allowed Hosts: {ALLOWED_HOSTS}")
-print(f"🔗 CORS Origins: {CORS_ALLOWED_ORIGINS}")
-print(f"🔒 CSRF Trusted Origins: {CSRF_TRUSTED_ORIGINS}")
-print("=" * 50)
