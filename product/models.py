@@ -56,7 +56,6 @@ class ProductImage(models.Model):
         ordering = ['ordering']
 
     def save(self, *args, **kwargs):
-        # ensure only one main image per product
         if self.is_main:
             ProductImage.objects.filter(
                 product=self.product,
@@ -125,3 +124,73 @@ class WhatsAppSettings(models.Model):
 
     def __str__(self):
         return self.whatsapp_number
+
+
+class BankAccount(models.Model):
+    BANK_CHOICES = [
+        ('HBL', 'Habib Bank Limited'),
+        ('UBL', 'United Bank Limited'),
+        ('ABL', 'Allied Bank Limited'),
+        ('NBP', 'National Bank of Pakistan'),
+        ('BAF', 'Bank Alfalah'),
+        ('EASYPAISA', 'Easypaisa'),
+        ('JAZZCASH', 'JazzCash'),
+        ('SADAPAY', 'Sadapay'),
+        ('NAYAPAY', 'Nayapay'),
+        ('Binance', 'Binance'),
+        ('Others', 'Others'),
+    ]
+    
+    bank_name = models.CharField(max_length=20, choices=BANK_CHOICES)
+    account_title = models.CharField(max_length=255)
+    account_number = models.CharField(max_length=50)
+    iban = models.CharField(max_length=50, blank=True, help_text="Optional IBAN number")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['bank_name']
+        verbose_name = "Bank Account"
+        verbose_name_plural = "Bank Accounts"
+
+    def __str__(self):
+        return f"{self.get_bank_name_display()} - {self.account_title} ({self.account_number})"
+
+
+class Order(models.Model):
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('PROCESSING', 'Processing'),
+        ('COMPLETED', 'Completed'),
+        ('CANCELLED', 'Cancelled'),
+    ]
+    
+    customer_name = models.CharField(max_length=255)
+    customer_email = models.EmailField()
+    customer_phone = models.CharField(max_length=20)
+    customer_address = models.TextField(blank=True)
+    
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='orders')
+    plan = models.ForeignKey(ProductPlan, on_delete=models.SET_NULL, null=True, blank=True, related_name='orders')
+    
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    bank_account = models.ForeignKey(BankAccount, on_delete=models.SET_NULL, null=True, related_name='orders')
+    transaction_id = models.CharField(max_length=255, help_text="Transaction ID / Reference Number")
+    
+    payment_proof = CloudinaryField('payment_proof', help_text="Upload screenshot of payment")
+    
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    admin_notes = models.TextField(blank=True, help_text="Internal notes about this order")
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Order"
+        verbose_name_plural = "Orders"
+
+    def __str__(self):
+        return f"Order #{self.id} - {self.customer_name} - {self.product.title}"

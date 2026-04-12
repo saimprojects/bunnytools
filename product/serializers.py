@@ -10,6 +10,8 @@ from .models import (
     Review,
     WhatsAppSettings,
     ProductPlan,
+    BankAccount,
+    Order,
 )
 
 
@@ -27,7 +29,6 @@ class ProductImageSerializer(serializers.ModelSerializer):
         fields = ['id', 'image', 'is_main', 'ordering']
 
     def get_image(self, obj):
-        # return full Cloudinary URL
         if obj.image:
             return obj.image.url
         return None
@@ -42,7 +43,6 @@ class ReviewSerializer(serializers.ModelSerializer):
             'rating',
             'comment',
             'created_at',
-            
         ]
 
 
@@ -90,3 +90,90 @@ class WhatsAppSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = WhatsAppSettings
         fields = ['whatsapp_number']
+
+
+class BankAccountSerializer(serializers.ModelSerializer):
+    bank_name_display = serializers.CharField(source='get_bank_name_display', read_only=True)
+    
+    class Meta:
+        model = BankAccount
+        fields = [
+            'id',
+            'bank_name',
+            'bank_name_display',
+            'account_title',
+            'account_number',
+            'iban',
+            'is_active',
+        ]
+
+
+class OrderCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = [
+            'customer_name',
+            'customer_email',
+            'customer_phone',
+            'customer_address',
+            'product',
+            'plan',
+            'amount',
+            'bank_account',
+            'transaction_id',
+            'payment_proof',
+        ]
+
+    def validate(self, data):
+        # Validate that if plan is selected, amount matches plan price
+        if data.get('plan'):
+            if data['amount'] != data['plan'].price:
+                raise serializers.ValidationError({
+                    'amount': 'Amount does not match the selected plan price'
+                })
+        return data
+
+
+class OrderSerializer(serializers.ModelSerializer):
+    product_details = ProductSerializer(source='product', read_only=True)
+    plan_details = ProductPlanSerializer(source='plan', read_only=True)
+    bank_account_details = BankAccountSerializer(source='bank_account', read_only=True)
+    payment_proof_url = serializers.SerializerMethodField()
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    
+    class Meta:
+        model = Order
+        fields = [
+            'id',
+            'customer_name',
+            'customer_email',
+            'customer_phone',
+            'customer_address',
+            'product',
+            'product_details',
+            'plan',
+            'plan_details',
+            'amount',
+            'bank_account',
+            'bank_account_details',
+            'transaction_id',
+            'payment_proof',
+            'payment_proof_url',
+            'status',
+            'status_display',
+            'admin_notes',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['status', 'admin_notes']
+    
+    def get_payment_proof_url(self, obj):
+        if obj.payment_proof:
+            return obj.payment_proof.url
+        return None
+
+
+class OrderStatusUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = ['status', 'admin_notes']
